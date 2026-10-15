@@ -5,7 +5,8 @@ import { solverCache } from "./solverCache.ts";
 import { getFromPrepared } from "../ejs/src/yt/solver/solvers.ts";
 import type { Solvers } from "./types.ts";
 import { workerErrors } from "./metrics.ts";
-import { PlayerScript } from "./player.ts";
+import type { PlayerScript } from "./player.ts";
+import { readFile } from "fs/promises";
 
 export async function getSolvers(playerScript: PlayerScript): Promise<Solvers | null> {
     const playerCacheKey = await getPlayerFilePath(playerScript);
@@ -18,7 +19,7 @@ export async function getSolvers(playerScript: PlayerScript): Promise<Solvers | 
 
     let preprocessedPlayer = preprocessedCache.get(playerCacheKey);
     if (!preprocessedPlayer) {
-        const rawPlayer = await Deno.readTextFile(playerCacheKey);
+        const rawPlayer = await readFile(playerCacheKey, "utf-8");
         try {
             preprocessedPlayer = await execInPool(rawPlayer);
         } catch (e) {

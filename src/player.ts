@@ -1,3 +1,5 @@
+import { playerScriptOverwrites } from "./metrics.ts";
+
 export enum PlayerVariant {
     IAS = 'IAS',
     IAS_TCC = 'IAS_TCC',
@@ -49,11 +51,8 @@ const playerVariantDetails: VariantDetail[] = [
     new VariantDetail(PlayerVariant.HOUSE, /^house_brand_player\.vflset\/([a-zA-Z_]+)\/base\.js$/, (region) => `house_brand_player.vflset/${region}/base.js`),
 ];
 
-import { playerScriptOverwrites } from "./metrics.ts";
-
-const overridePlayerId = Deno.env.get('OVERRIDE_PLAYER_ID');
-const overridePlayerVariant = Deno.env.get('OVERRIDE_PLAYER_VARIANT');
-
+const overridePlayerId = process.env.OVERRIDE_PLAYER_ID;
+const overridePlayerVariant = process.env.OVERRIDE_PLAYER_VARIANT;
 
 export class PlayerScript {
     constructor(

@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { initializeWorkers } from "./src/workerPool.ts";
 import { initializeCache } from "./src/playerCache.ts";
 import { handleDecryptSignature } from "./src/handlers/decryptSignature.ts";
@@ -10,48 +9,41 @@ import { withValidation } from "./src/validation.ts";
 import { registry } from "./src/metrics.ts";
 import type { ApiRequest, RequestContext } from "./src/types.ts";
 
-const API_TOKEN = Deno.env.get("API_TOKEN");
+const API_TOKEN = process.env.API_TOKEN;
+
+async function serveFile(path: string, contentType: string, notFoundMessage: string): Promise<Response> {
+    const file = Bun.file(path);
+    if (!(await file.exists())) {
+        return new Response(notFoundMessage, {
+            status: 404,
+            headers: { "Content-Type": "text/plain" },
+        });
+    }
+    return new Response(await file.arrayBuffer(), {
+        status: 200,
+        headers: { "Content-Type": contentType },
+    });
+}
 
 async function baseHandler(req: Request): Promise<Response> {
     const { pathname } = new URL(req.url);
 
     if (req.method === "GET") {
         if (pathname === "/") {
-            try {
-                const file = await Deno.readFile("./docs/index.html");
-                return new Response(file, {
-                    status: 200,
-                    headers: { "Content-Type": "text/html" },
-                });
-            } catch {
-                return new Response(
-                    "Homepage not found. Please refer to the API spec at https://github.com/kikkia/yt-cipher?tab=readme-ov-file#api-specification",
-                    {
-                        status: 404,
-                        headers: { "Content-Type": "text/plain" },
-                    }
-                );
-            }
+            return serveFile(
+                "./docs/index.html",
+                "text/html",
+                "Homepage not found. Please refer to the API spec at https://github.com/kikkia/yt-cipher?tab=readme-ov-file#api-specification",
+            );
         }
         if (pathname === "/swagger.yaml") {
-            try {
-                const file = await Deno.readFile("./docs/swagger.yaml");
-                return new Response(file, {
-                    status: 200,
-                    headers: { "Content-Type": "application/yaml" },
-                });
-            } catch {
-                return new Response("Swagger spec not found", {
-                    status: 404,
-                    headers: { "Content-Type": "text/plain" },
-                });
-            }
+            return serveFile("./docs/swagger.yaml", "application/yaml", "Swagger spec not found");
         }
     }
 
     if (pathname === '/metrics') {
-        return new Response(registry.metrics(), {
-            headers: { "Content-Type": "text/plain" },
+        return new Response(await registry.metrics(), {
+            headers: { "Content-Type": registry.contentType },
         });
     }
 
@@ -75,7 +67,7 @@ async function baseHandler(req: Request): Promise<Response> {
         return new Response(JSON.stringify({ error: 'Not Found' }), { status: 404, headers: { "Content-Type": "application/json" } });
     }
 
-    let body;
+    let body: ApiRequest;
     try {
         body = await req.json() as ApiRequest;
     } catch {
@@ -87,13 +79,15 @@ async function baseHandler(req: Request): Promise<Response> {
     return await composedHandler(ctx);
 }
 
-const handler = baseHandler;
-
-const port = Deno.env.get("PORT") || 8001;
-const host = Deno.env.get("HOST") || '0.0.0.0';
+const port = Number(process.env.PORT) || 8001;
+const host = process.env.HOST || '0.0.0.0';
 
 await initializeCache();
 initializeWorkers();
 
 console.log(`Server listening on http://${host}:${port}`);
-await serve(handler, { port: Number(port), hostname: host });
+Bun.serve({
+    port,
+    hostname: host,
+    fetch: baseHandler,
+});

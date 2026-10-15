@@ -1,6 +1,7 @@
 import { getPlayerFilePath } from "../playerCache.ts";
 import type { RequestContext, StsResponse } from "../types.ts";
 import { stsCache } from "../stsCache.ts";
+import { readFile } from "fs/promises";
 
 export async function handleGetSts(ctx: RequestContext): Promise<Response> {
     const playerFilePath = await getPlayerFilePath(ctx.playerScript!);
@@ -14,7 +15,7 @@ export async function handleGetSts(ctx: RequestContext): Promise<Response> {
         });
     }
 
-    const playerContent = await Deno.readTextFile(playerFilePath);
+    const playerContent = await readFile(playerFilePath, "utf-8");
 
     const stsPattern = /(signatureTimestamp|sts):(\d+)/;
     const match = playerContent.match(stsPattern);

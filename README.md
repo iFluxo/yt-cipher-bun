@@ -4,13 +4,46 @@ An http api wrapper for [yt-dlp/ejs](https://github.com/yt-dlp/ejs).
 
 # Getting Started
 
+### Native Bun Support (Forked)
+
+This service runs natively on [Bun](https://bun.sh). Make sure Bun is installed, then:
+
+```bash
+git clone https://github.com/iFluxo/yt-chiper.git
+cd yt-chiper
+
+# Fetch the yt-dlp/ejs sources this service depends on
+git clone https://github.com/yt-dlp/ejs.git
+cd ejs
+git checkout cd4e87f52e87ab6d8b318fd3a817adda6fafa8dc
+cd ..
+
+# Install dependencies
+bun install
+```
+
+```bash
+bun server.ts
+```
+
+Or via the npm scripts:
+
+```bash
+bun run start   # bun server.ts
+bun run dev     # bun --watch server.ts
+```
+If done, the service will run on
+```bash
+http://localhost:8001
+```
+
 ## Lavalink
 The absolute easiest way to use this with Lavalink is to just add this to the youtube plugin config
 ```yaml
 plugins:
   youtube:
     remoteCipher:
-      url: "https://cipher.kikkia.dev/"
+      url: "http://localhost:8001/"
       userAgent: "your_service_name" # Optional
 ```
 
@@ -26,7 +59,7 @@ WARNING: Ratelimit of 10 requests/sec (should be fine up to 1000+ active players
 > [!NOTE]
 > Right now only the `IAS` script variants consistantly work. It is reccomended to run with the `OVERRIDE_SCRIPT_VARIANT` env var set to `IAS`
 
-### Docker/Docker-compose
+### Docker (Original)
 
 The easiest way to host this service is with Docker (NOTE: Default password in the docker-compose.yml is "test")
 
@@ -50,27 +83,6 @@ Windows (PowerShell):
 .\scripts\update-compose.ps1
 ```
 
-### Deno
-
-If you have Deno installed, you can run the service directly.
-
-Clone the repository and patch the `ejs` dependency:
-
-```bash
-git clone https://github.com/kikkia/yt-cipher.git
-cd yt-cipher
-git clone https://github.com/yt-dlp/ejs.git
-cd ejs
-git checkout cd4e87f52e87ab6d8b318fd3a817adda6fafa8dc
-cd ..
-deno run --allow-read --allow-write ./scripts/patch-ejs.ts
-```
-
-```bash
-deno run --allow-net --allow-read --allow-write --allow-env server.ts
-```
-NOTE: If using an `.env` file then also add the `--env` flag
-
 ## Authentication
 
 You can optionally set the `API_TOKEN` environment variable in your `docker-compose.yml` file to require a password to access the service.
@@ -83,7 +95,7 @@ Environment Variables:
 - `MAX_THREADS` - max # of workers that can handle requests. Default is 1 per thread on the machine or 1 if it can't determine that for some reason. 
 - `API_TOKEN` - A required password to access this service
 - `PORT` - Port to run the api on, default: `8001`
-- `HOST` - Sets the hostname for the deno server, default: `0.0.0.0`
+- `HOST` - Sets the hostname for the Bun server, default: `0.0.0.0`
 - `PREPROCESSED_CACHE_SIZE` - Max size of processed player script cache. Lower to consume less memory. default: `150`
 - `IGNORE_SCRIPT_REGION` - When set to `true`, this flag modifies the caching behavior of player scripts to disregard regional differences. If your yt-cipher needs to decipher for multiple regions, this can help with memory usage and response time. Default is `false`.
 > [!WARNING]

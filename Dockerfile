@@ -1,43 +1,39 @@
-FROM denoland/deno:latest AS builder
+FROM oven/bun:1 AS builder
 
 WORKDIR /usr/src/app
 
-RUN apt-get update && apt-get install -y git
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git && \
+    rm -rf /var/lib/apt/lists/*
 
+# Fetch the yt-dlp/ejs sources we depend on.
 ARG EJS_COMMIT=cd4e87f52e87ab6d8b318fd3a817adda6fafa8dc
 RUN git init ejs && \
-     cd ejs && \
-     git remote add origin https://github.com/yt-dlp/ejs.git && \
-     git fetch --depth 1 origin "$EJS_COMMIT" && \
-     git checkout --detach FETCH_HEAD && \
-     cd ..
+    cd ejs && \
+    git remote add origin https://github.com/yt-dlp/ejs.git && \
+    git fetch --depth 1 origin "$EJS_COMMIT" && \
+    git checkout --detach FETCH_HEAD && \
+    cd .. && \
+    rm -rf ./ejs/.git ./ejs/node_modules
 
-COPY scripts/patch-ejs.ts ./scripts/patch-ejs.ts
-RUN deno run --allow-read --allow-write ./scripts/patch-ejs.ts
-
-RUN rm -rf ./ejs/.git ./ejs/node_modules || true
+# Install dependencies.
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --omit=dev
 
 COPY . .
 
-RUN deno compile \
-    --no-check \
-    --output server \
-    --allow-net --allow-read --allow-write --allow-env \
-    --include worker.ts \
-    server.ts
-
-RUN mkdir -p /usr/src/app/player_cache && \
-    chown -R deno:deno /usr/src/app/player_cache
-
-FROM gcr.io/distroless/cc-debian12
+FROM oven/bun:1 AS runner
 
 WORKDIR /app
 
-COPY --from=builder /usr/src/app/server /app/server
+ENV HOST=0.0.0.0 \
+    PORT=8001 \
+    XDG_CACHE_HOME=/app/data
 
-COPY --from=builder --chown=nonroot:nonroot /usr/src/app/player_cache /app/player_cache
-COPY --from=builder --chown=nonroot:nonroot /usr/src/app/docs /app/docs
+COPY --from=builder /usr/src/app /app
 
-USER nonroot
+RUN mkdir -p /app/data
+
 EXPOSE 8001
-ENTRYPOINT ["/app/server"]
+
+ENTRYPOINT ["bun", "server.ts"]

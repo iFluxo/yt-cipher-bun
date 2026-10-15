@@ -1,63 +1,59 @@
-import {
-    Counter,
-    Gauge,
-    Registry,
-} from "https://deno.land/x/ts_prometheus/mod.ts";
+import { Counter, Gauge, Registry } from "prom-client";
 
 export const registry = new Registry();
 
-export const endpointHits = Counter.with({
+export const endpointHits = new Counter({
     name: "http_requests_total",
     help: "Total number of HTTP requests.",
-    labels: ["pathname", "player_id", "player_type"],
-    registry: [registry],
+    labelNames: ["pathname", "player_id", "player_type"],
+    registers: [registry],
 });
 
-export const userAgentRequests = Counter.with({
+export const userAgentRequests = new Counter({
     name: "http_requests_by_user_agent_total",
     help: "Total number of HTTP requests by user agent.",
-    labels: ["user_agent"],
-    registry: [registry],
+    labelNames: ["user_agent"],
+    registers: [registry],
 });
 
-export const responseCodes = Counter.with({
+export const responseCodes = new Counter({
     name: "http_responses_total",
     help: "Total number of HTTP responses.",
-    labels: ["pathname", "status", "player_id", "player_type"],
-    registry: [registry],
+    labelNames: ["pathname", "status", "player_id", "player_type"],
+    registers: [registry],
 });
 
-export const workerErrors = Counter.with({
+export const workerErrors = new Counter({
     name: "worker_errors_total",
     help: "Total number of worker errors.",
-    labels: ["player_id", "player_type", "message"],
-    registry: [registry],
+    labelNames: ["player_id", "player_type", "message"],
+    registers: [registry],
 });
 
-export const playerScriptOverwrites = Counter.with({
+export const playerScriptOverwrites = new Counter({
     name: "player_script_overwrites_total",
     help: "Total number of player script overwrites, e.g. when forcing a specific player version.",
-    labels: ["type", "source", "forced"],
-    registry: [registry],
+    labelNames: ["type", "source", "forced"],
+    registers: [registry],
 });
 
-export const cacheSize = Gauge.with({
+export const cacheSize = new Gauge({
     name: "cache_size",
     help: "The number of items in the cache.",
-    labels: ["cache_name"],
-    registry: [registry],
+    labelNames: ["cache_name"],
+    registers: [registry],
 });
 
-export const playerUrlRequests = Counter.with({
+export const playerUrlRequests = new Counter({
     name: "player_url_requests_total",
     help: "Total number of requests for each player ID.",
-    labels: ["player_id", "player_type"],
-    registry: [registry],
+    labelNames: ["player_id", "player_type"],
+    registers: [registry],
 });
 
-export const playerScriptFetches = Counter.with({
+export const playerScriptFetches = new Counter({
     name: "player_script_fetches_total",
     help: "Total number of player script fetches by response status.",
-    labels: ["status"],
-    registry: [registry],
+    labelNames: ["status"],
+    registers: [registry],
 });

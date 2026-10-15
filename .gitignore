@@ -1,2 +1,7 @@
-ejs/
 .vscode/
+node_modules/
+player_cache/
+.cache/
+data/
+*.log
+ejs

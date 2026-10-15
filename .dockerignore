@@ -1,0 +1,11 @@
+.git
+.gitignore
+.github
+.vscode
+node_modules
+ejs
+player_cache
+data
+*.log
+Dockerfile
+docker-compose.yml
